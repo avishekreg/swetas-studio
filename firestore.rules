@@ -13,11 +13,10 @@ service cloud.firestore {
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
 
-    function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == "avishekreg@gmail.com" ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
-      );
+    function isPrivileged() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["super_admin", "admin"];
     }
     
     function isOwner(userId) {
@@ -27,21 +26,21 @@ service cloud.firestore {
     // --- Collection: Users ---
     function isValidUser(data) {
       return data.email is string &&
-             data.role in ['customer', 'admin'] &&
+             data.role in ['customer', 'promotions', 'customer_care', 'shipping', 'order_fulfillment', 'admin', 'super_admin'] &&
              data.uid is string &&
              data.favorites is list &&
              data.createdAt != null;
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
+      allow get: if isOwner(userId) || isPrivileged();
+      allow list: if isPrivileged();
       allow create: if isOwner(userId) && 
                       isValidUser(incoming()) &&
-                      incoming().role == (request.auth.token.email == "avishekreg@gmail.com" ? "admin" : "customer");
+                      incoming().role == "customer";
       allow update: if (isOwner(userId) && 
                         incoming().diff(existing()).affectedKeys().hasOnly(['favorites'])) || 
-                       isAdmin();
+                       isPrivileged();
     }
 
     // --- Collection: Items ---
@@ -54,7 +53,7 @@ service cloud.firestore {
 
     match /items/{itemId} {
       allow read: if true; // Publicly browse-able
-      allow write: if isAdmin() && isValidItem(incoming());
+      allow write: if isPrivileged() && isValidItem(incoming());
     }
 
     // --- Collection: Promotions ---
@@ -69,7 +68,7 @@ service cloud.firestore {
 
     match /promotions/{promoId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidPromotion(incoming());
+      allow write: if isPrivileged() && isValidPromotion(incoming());
     }
 
     // --- Collection: Orders ---
@@ -81,9 +80,9 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isPrivileged());
       allow create: if isEmailVerified() && isValidOrder(incoming());
-      allow update: if isAdmin() && 
+      allow update: if isPrivileged() && 
                        incoming().diff(existing()).affectedKeys().hasAny(['status', 'trackingNumber']);
     }
   }

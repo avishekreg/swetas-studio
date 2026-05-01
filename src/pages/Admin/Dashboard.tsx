@@ -6,6 +6,7 @@ import { Order, FashionItem } from '../../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
 import { TrendingUp, ShoppingCart, Package, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AdminAccessNotice from '../../components/AdminAccessNotice';
 
 const AdminDashboard = () => {
   const { isAdmin } = useAuth();
@@ -24,7 +25,7 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  if (!isAdmin) return <div className="p-24 text-center font-serif italic">Unauthorized access.</div>;
+  if (!isAdmin) return <AdminAccessNotice />;
   if (loading) return <div className="h-screen flex items-center justify-center font-serif italic">Analyzing Business Data...</div>;
 
   const totalRevenue = orders.reduce((acc, curr) => acc + curr.totalAmount, 0);

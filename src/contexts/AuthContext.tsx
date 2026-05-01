@@ -3,13 +3,17 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../firebase';
 import { UserService } from '../services/storeService';
 import { UserProfile } from '../types';
+import { CUSTOMER_ROLE, isPrivilegedRole } from '../lib/auth';
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
-  signIn: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithEmailPassword: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -24,24 +28,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        let p = await UserService.getProfile(user.uid);
-        const hardcodedAdmin = user.email === 'avishekreg@gmail.com';
+        const p = await UserService.getProfile(user.uid);
         
         if (!p) {
           const newProfile: Omit<UserProfile, 'createdAt'> = {
             uid: user.uid,
             email: user.email!,
-            role: hardcodedAdmin ? 'admin' : 'customer',
+            role: CUSTOMER_ROLE,
             favorites: [],
           };
           await UserService.syncProfile(newProfile);
           setProfile({ ...newProfile, createdAt: new Date() } as UserProfile);
         } else {
-          // If profile exists but is for our admin email, ensure the role is correct in local state
-          if (hardcodedAdmin && p.role !== 'admin') {
-            p.role = 'admin';
-            // Optionally sync back to DB: await UserService.updateRole(user.uid, 'admin');
-          }
           setProfile(p);
         }
       } else {
@@ -53,9 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const signIn = async () => {
+  const signInWithGoogle = async () => {
     const { signInWithGoogle } = await import('../firebase');
     await signInWithGoogle();
+  };
+
+  const signInWithEmailPassword = async (email: string, password: string) => {
+    const { signInWithEmail } = await import('../firebase');
+    await signInWithEmail(email, password);
+  };
+
+  const resetPassword = async (email: string) => {
+    const { sendAdminPasswordReset } = await import('../firebase');
+    await sendAdminPasswordReset(email);
   };
 
   const signOut = () => auth.signOut();
@@ -64,9 +72,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       user, 
       profile, 
-      isAdmin: profile?.role === 'admin' || user?.email === 'avishekreg@gmail.com', 
+      isAdmin: isPrivilegedRole(profile?.role),
+      isSuperAdmin: profile?.role === 'super_admin',
       loading, 
-      signIn, 
+      signInWithGoogle,
+      signInWithEmailPassword,
+      resetPassword,
       signOut 
     }}>
       {children}

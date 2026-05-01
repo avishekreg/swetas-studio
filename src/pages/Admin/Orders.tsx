@@ -5,6 +5,7 @@ import { OrderService } from '../../services/storeService';
 import { Order, OrderStatus } from '../../types';
 import { Package, Truck, CheckCircle, Clock, ExternalLink } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import AdminAccessNotice from '../../components/AdminAccessNotice';
 
 const AdminOrders = () => {
   const { isAdmin } = useAuth();
@@ -30,7 +31,7 @@ const AdminOrders = () => {
     if (data) setOrders(data);
   };
 
-  if (!isAdmin) return <div className="p-24 text-center">Unauthorized</div>;
+  if (!isAdmin) return <AdminAccessNotice />;
 
   return (
     <motion.div 

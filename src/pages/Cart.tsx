@@ -15,13 +15,13 @@ declare global {
 
 const Cart = () => {
   const { cart, removeFromCart, total, clearCart } = useCart();
-  const { user, signIn } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
 
   const handleCheckout = async () => {
     if (!user) {
-      await signIn();
+      await signInWithGoogle();
       return;
     }
 

@@ -6,6 +6,7 @@ import { analyzeFabric, simulateVirtualTryOn } from '../../services/geminiServic
 import { FashionItem } from '../../types';
 import { Upload, Wand2, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import AdminAccessNotice from '../../components/AdminAccessNotice';
 
 const AdminInventory = () => {
   const { isAdmin } = useAuth();
@@ -107,7 +108,7 @@ const AdminInventory = () => {
     setLoading(false);
   };
 
-  if (!isAdmin) return <div className="p-24 text-center">Restricted Access</div>;
+  if (!isAdmin) return <AdminAccessNotice />;
 
   return (
     <motion.div 

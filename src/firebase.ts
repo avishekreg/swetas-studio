@@ -1,5 +1,11 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, initializeFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -14,6 +20,9 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithEmail = (email: string, password: string) =>
+  signInWithEmailAndPassword(auth, email, password);
+export const sendAdminPasswordReset = (email: string) => sendPasswordResetEmail(auth, email);
 
 // Connection test - only run once and handle errors gracefully
 async function testConnection() {

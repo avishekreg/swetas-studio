@@ -12,11 +12,12 @@ import AdminDashboard from './pages/Admin/Dashboard';
 import AdminInventory from './pages/Admin/Inventory';
 import AdminOrders from './pages/Admin/Orders';
 import AdminPromotions from './pages/Admin/Promotions';
+import AdminLogin from './pages/Admin/Login';
 import OrderTracking from './pages/OrderTracking';
 import Favorites from './pages/Favorites';
 
 const Navbar = () => {
-  const { user, isAdmin, signOut, signIn } = useAuth();
+  const { user, isAdmin, signOut, signInWithGoogle } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
@@ -26,11 +27,11 @@ const Navbar = () => {
           <div className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
             <div className="absolute inset-0 border border-black/10 group-hover:border-[#D4AF37]/50 rounded-full transition-colors duration-700" />
             <div className="absolute inset-[1px] md:inset-[2px] border border-black group-hover:rotate-180 transition-transform duration-1000" />
-            <div className="absolute inset-[3px] md:inset-[4px] rounded-full overflow-hidden">
+            <div className="absolute inset-[3px] md:inset-[4px] rounded-full overflow-hidden bg-[#faf4ea] shadow-[inset_0_0_0_1px_rgba(183,145,79,0.22)]">
               <img
-                src="/images/swetas-studio-mark.png"
+                src="/images/swetas-studio-mark-header.png"
                 alt="Sweta's Studio mark"
-                className="w-full h-full object-cover rounded-full scale-[1.03]"
+                className="w-full h-full object-cover rounded-full scale-[1.16] brightness-[1.03] contrast-[1.06]"
               />
             </div>
           </div>
@@ -47,7 +48,9 @@ const Navbar = () => {
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8 text-xs uppercase tracking-widest font-medium">
           <Link to="/collections" className="hover:text-[#D4AF37] transition-colors">Collections</Link>
-          {isAdmin && <Link to="/admin" className="text-[#D4AF37] hover:underline">Admin Panel</Link>}
+          <Link to={isAdmin ? "/admin" : "/admin/login"} className="text-[#D4AF37] hover:underline">
+            {isAdmin ? 'Admin Panel' : 'Admin Login'}
+          </Link>
           <div className="flex items-center space-x-6 ml-8">
             <Link to="/favorites" className="relative group">
               <Heart size={20} />
@@ -58,13 +61,13 @@ const Navbar = () => {
             </Link>
             {user ? (
               <div className="flex items-center space-x-4">
-                <Link to="/profile"><User size={20} /></Link>
+                <Link to={isAdmin ? "/admin" : "/orders"}><User size={20} /></Link>
                 <button onClick={signOut} className="hover:text-red-500 transition-colors">
                   <LogOut size={18} />
                 </button>
               </div>
             ) : (
-              <button onClick={signIn} className="border border-black px-4 py-1.5 hover:bg-black hover:text-white transition-all">
+              <button onClick={signInWithGoogle} className="border border-black px-4 py-1.5 hover:bg-black hover:text-white transition-all">
                 Login
               </button>
             )}
@@ -87,13 +90,15 @@ const Navbar = () => {
             className="md:hidden bg-[#f5f2ed] border-b border-black/10 p-4 flex flex-col space-y-4 text-sm tracking-widest uppercase text-center"
           >
             <Link to="/collections" onClick={() => setIsOpen(false)}>Collections</Link>
-            {isAdmin && <Link to="/admin" onClick={() => setIsOpen(false)}>Admin Panel</Link>}
+            <Link to={isAdmin ? "/admin" : "/admin/login"} onClick={() => setIsOpen(false)}>
+              {isAdmin ? 'Admin Panel' : 'Admin Login'}
+            </Link>
             <Link to="/favorites" onClick={() => setIsOpen(false)}>Favorites</Link>
             <Link to="/cart" onClick={() => setIsOpen(false)}>Cart</Link>
             {user ? (
               <button onClick={() => { signOut(); setIsOpen(false); }} className="text-red-500">Logout</button>
             ) : (
-              <button onClick={() => { signIn(); setIsOpen(false); }}>Login</button>
+              <button onClick={() => { signInWithGoogle(); setIsOpen(false); }}>Login</button>
             )}
           </motion.div>
         )}
@@ -113,6 +118,7 @@ const AnimatedRoutes = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/orders" element={<OrderTracking />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />

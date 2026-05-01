@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PromotionService } from '../../services/storeService';
 import { Promotion } from '../../types';
 import { Plus, Trash2, Calendar, Tag, Percent, CheckCircle2 } from 'lucide-react';
+import AdminAccessNotice from '../../components/AdminAccessNotice';
 
 const AdminPromotions = () => {
   const { isAdmin } = useAuth();
@@ -54,7 +55,7 @@ const AdminPromotions = () => {
     }
   };
 
-  if (!isAdmin) return <div className="p-24 text-center">Restricted Access</div>;
+  if (!isAdmin) return <AdminAccessNotice />;
 
   return (
     <motion.div 
