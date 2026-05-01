@@ -13,16 +13,16 @@ const Home = () => {
     >
       {/* Hero Section */}
       <section className="relative h-[95vh] flex items-center justify-start overflow-hidden bg-white px-6 md:px-12 lg:px-24">
-        {/* Background Image - Busy Indian Boutique Atelier with Indian Ethnic Wear and Machines */}
+        {/* Background Image - Hand embroidery atelier detail */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1589156229687-496a31ad1d1f?auto=format&fit=crop&q=80&w=2000" 
-            alt="Indian fashion designer studio with ethnic attire and sewing machines"
-            className="w-full h-full object-cover opacity-100 scale-100 transition-transform duration-[40s] ease-out"
+            src="/images/hero-embroidery.png"
+            alt="Artisan hand-embroidering gold threadwork on emerald fabric"
+            className="w-full h-full object-cover object-center opacity-100 scale-100 transition-transform duration-[40s] ease-out"
           />
-          {/* Balanced overlays for readability while keeping the vivid atelier atmosphere visible */}
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/10 to-transparent text-white" />
+          {/* Warm overlays for readability without losing the embroidery detail */}
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,10,7,0.72)_0%,rgba(15,10,7,0.38)_34%,rgba(15,10,7,0.08)_62%,rgba(15,10,7,0.18)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.18),transparent_42%)]" />
         </div>
 
         <div className="relative z-10 text-left space-y-6 md:space-y-8 max-w-4xl pt-12">
