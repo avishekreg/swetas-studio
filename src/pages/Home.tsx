@@ -36,6 +36,15 @@ const Home = () => {
                <div className="w-8 md:w-12 h-[1px] bg-[#D4AF37]" />
                <span className="text-[#D4AF37] text-[8px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.6em] font-light">Custom Hand-Embroidery</span>
             </div>
+
+            <motion.img
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.9 }}
+              src="/images/swetas-studio-mark.png"
+              alt="Sweta's Studio circular atelier emblem"
+              className="w-36 sm:w-44 md:w-56 lg:w-64 rounded-full bg-white/80 p-2 shadow-[0_24px_80px_rgba(34,20,7,0.28)] ring-1 ring-white/35"
+            />
             
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tighter text-white leading-tight">
               Sweta's <br />
