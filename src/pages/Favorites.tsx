@@ -5,6 +5,7 @@ import { ItemService } from '../services/storeService';
 import { FashionItem } from '../types';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, ChevronRight, Heart } from 'lucide-react';
+import DesignImage from '../components/DesignImage';
 
 const Favorites = () => {
   const { profile, user } = useAuth();
@@ -48,10 +49,12 @@ const Favorites = () => {
               className="group relative"
             >
               <Link to={`/product/${item.id}`} className="block overflow-hidden bg-white aspect-[3/4.5] relative">
-                <img 
+                <DesignImage
                   src={item.renderedImageUrl || item.fabricImageUrl} 
                   alt={item.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 mx-auto"
+                  loading="lazy"
+                  containerClassName="h-full"
                 />
               </Link>
               

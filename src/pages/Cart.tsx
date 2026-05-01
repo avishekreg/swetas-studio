@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { OrderService } from '../services/storeService';
 import { Trash2, ChevronRight, CreditCard, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import DesignImage from '../components/DesignImage';
 
 declare global {
   interface Window {
@@ -109,9 +110,14 @@ const Cart = () => {
                 animate={{ opacity: 1 }}
                 className="flex gap-8 group pb-8 border-b border-black/5"
               >
-                <div className="w-24 h-32 md:w-32 md:h-44 bg-white overflow-hidden">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                </div>
+                <DesignImage
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                  containerClassName="w-24 h-32 md:w-32 md:h-44 bg-white"
+                  watermarkClassName="bottom-2 right-2 sm:bottom-3 sm:right-3"
+                  loading="lazy"
+                />
                 <div className="flex-1 space-y-4">
                   <div className="flex justify-between items-start">
                     <div>

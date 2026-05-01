@@ -24,10 +24,15 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-3 md:space-x-5 group">
           <div className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
-            {/* The circular frame */}
             <div className="absolute inset-0 border border-black/10 group-hover:border-[#D4AF37]/50 rounded-full transition-colors duration-700" />
             <div className="absolute inset-[1px] md:inset-[2px] border border-black group-hover:rotate-180 transition-transform duration-1000" />
-            <span className="text-[#1a1a1a] font-serif text-2xl md:text-3xl leading-none italic relative z-10">S</span>
+            <div className="absolute inset-[3px] md:inset-[4px] rounded-full overflow-hidden">
+              <img
+                src="/images/swetas-studio-mark.png"
+                alt="Sweta's Studio mark"
+                className="w-full h-full object-cover rounded-full scale-[1.03]"
+              />
+            </div>
           </div>
           <div className="flex flex-col h-8 md:h-10 justify-center">
             <span className="text-base md:text-xl font-serif tracking-[0.15em] md:tracking-[0.2em] uppercase text-[#1a1a1a] leading-none mb-0.5 md:mb-1">

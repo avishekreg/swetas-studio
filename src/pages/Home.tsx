@@ -16,9 +16,11 @@ const Home = () => {
         {/* Background Image - Hand embroidery atelier detail */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/images/hero-embroidery.png"
+            src="/images/hero-embroidery-optimized.jpg"
             alt="Artisan hand-embroidering gold threadwork on emerald fabric"
             className="w-full h-full object-cover object-center opacity-100 scale-100 transition-transform duration-[40s] ease-out"
+            loading="eager"
+            fetchPriority="high"
           />
           {/* Warm overlays for readability without losing the embroidery detail */}
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,10,7,0.72)_0%,rgba(15,10,7,0.38)_34%,rgba(15,10,7,0.08)_62%,rgba(15,10,7,0.18)_100%)]" />
@@ -37,15 +39,6 @@ const Home = () => {
                <span className="text-[#D4AF37] text-[8px] md:text-xs uppercase tracking-[0.4em] md:tracking-[0.6em] font-light">Custom Hand-Embroidery</span>
             </div>
 
-            <motion.img
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.9 }}
-              src="/images/swetas-studio-mark.png"
-              alt="Sweta's Studio circular atelier emblem"
-              className="w-36 sm:w-44 md:w-56 lg:w-64 rounded-full bg-white/80 p-2 shadow-[0_24px_80px_rgba(34,20,7,0.28)] ring-1 ring-white/35"
-            />
-            
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tighter text-white leading-tight">
               Sweta's <br />
               <span className="italic block ml-8 md:ml-32 text-[#D4AF37]">Atelier</span>

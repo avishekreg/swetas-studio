@@ -8,6 +8,7 @@ import { Heart, ChevronRight, Ruler, Sparkles, AlertTriangle, Wand2, User as Use
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 import { GoogleGenAI } from "@google/genai";
+import DesignImage from '../components/DesignImage';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -165,11 +166,12 @@ const ProductDetail = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="aspect-[3/4.5] bg-white overflow-hidden relative"
           >
-            <img 
+            <DesignImage
               src={item.renderedImageUrl || item.fabricImageUrl} 
               alt={item.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
+              containerClassName="h-full"
             />
             {item.isOneOfOne && (
               <div className="absolute top-6 left-6 bg-[#D4AF37] text-white text-[10px] uppercase tracking-[0.3em] px-4 py-2 flex items-center gap-2 shadow-2xl">
@@ -188,11 +190,13 @@ const ProductDetail = () => {
           {item.renderedImageUrl && item.fabricImageUrl && (
             <div className="grid grid-cols-2 gap-4">
                <div className="aspect-square bg-white border border-black/5 overflow-hidden group hover:border-[#D4AF37] transition-colors relative">
-                <img 
+                <DesignImage
                   src={item.fabricImageUrl} 
                   alt="Fabric texture" 
                   className="w-full h-full object-cover opacity-80" 
                   referrerPolicy="no-referrer"
+                  containerClassName="h-full"
+                  watermarkClassName="bottom-2 right-2"
                 />
                 <p className="absolute bottom-4 left-0 right-0 py-2 text-[8px] uppercase tracking-widest text-center bg-white/60">Raw Material</p>
                </div>

@@ -5,6 +5,7 @@ import { ItemService, PromotionService, UserService } from '../services/storeSer
 import { FashionItem, Promotion } from '../types';
 import { Heart, Filter, ChevronDown, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import DesignImage from '../components/DesignImage';
 
 const ProductList = () => {
   const [items, setItems] = useState<FashionItem[]>([]);
@@ -95,11 +96,13 @@ const ProductList = () => {
             className="group relative"
           >
             <Link to={`/product/${item.id}`} className="block overflow-hidden bg-white aspect-[3/4.5] relative">
-              <img 
+              <DesignImage
                 src={item.renderedImageUrl || item.fabricImageUrl} 
                 alt={item.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
+                loading="lazy"
+                containerClassName="h-full"
               />
               {!item.renderedImageUrl && (
                 <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-black text-white text-[6px] md:text-[8px] uppercase tracking-widest px-1.5 md:px-2 py-0.5 md:py-1 z-10">
