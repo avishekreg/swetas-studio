@@ -16,13 +16,12 @@ import AdminLogin from './pages/Admin/Login';
 import AdminStaff from './pages/Admin/Staff';
 import OrderTracking from './pages/OrderTracking';
 import Favorites from './pages/Favorites';
-import { getAdminHomeRoute, ROLE_LABELS } from './lib/auth';
+import { getPostLoginRoute } from './lib/auth';
 
 const Navbar = () => {
-  const { user, role, signOut, signInWithGoogle } = useAuth();
+  const { user, role, signOut } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
-  const hasBackOfficeAccess = !!role && role !== 'customer';
-  const adminHref = getAdminHomeRoute(role);
+  const userHomeHref = getPostLoginRoute(role);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f2ed]/90 backdrop-blur-md border-b border-black/10">
@@ -51,9 +50,6 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center space-x-8 text-xs uppercase tracking-widest font-medium">
           <Link to="/collections" className="hover:text-[#D4AF37] transition-colors">Collections</Link>
-          <Link to={hasBackOfficeAccess ? adminHref : '/admin/login'} className="text-[#D4AF37] hover:underline">
-            {hasBackOfficeAccess ? `${ROLE_LABELS[role!]} Panel` : 'Admin Login'}
-          </Link>
           <div className="flex items-center space-x-6 ml-8">
             <Link to="/favorites" className="relative group">
               <Heart size={20} />
@@ -64,15 +60,15 @@ const Navbar = () => {
             </Link>
             {user ? (
               <div className="flex items-center space-x-4">
-                <Link to={hasBackOfficeAccess ? adminHref : '/orders'}><User size={20} /></Link>
+                <Link to={userHomeHref}><User size={20} /></Link>
                 <button onClick={signOut} className="hover:text-red-500 transition-colors">
                   <LogOut size={18} />
                 </button>
               </div>
             ) : (
-              <button onClick={signInWithGoogle} className="border border-black px-4 py-1.5 hover:bg-black hover:text-white transition-all">
+              <Link to="/login" className="border border-black px-4 py-1.5 hover:bg-black hover:text-white transition-all">
                 Login
-              </button>
+              </Link>
             )}
           </div>
         </div>
@@ -91,15 +87,12 @@ const Navbar = () => {
             className="md:hidden bg-[#f5f2ed] border-b border-black/10 p-4 flex flex-col space-y-4 text-sm tracking-widest uppercase text-center"
           >
             <Link to="/collections" onClick={() => setIsOpen(false)}>Collections</Link>
-            <Link to={hasBackOfficeAccess ? adminHref : '/admin/login'} onClick={() => setIsOpen(false)}>
-              {hasBackOfficeAccess ? `${ROLE_LABELS[role!]} Panel` : 'Admin Login'}
-            </Link>
             <Link to="/favorites" onClick={() => setIsOpen(false)}>Favorites</Link>
             <Link to="/cart" onClick={() => setIsOpen(false)}>Cart</Link>
             {user ? (
               <button onClick={() => { void signOut(); setIsOpen(false); }} className="text-red-500">Logout</button>
             ) : (
-              <button onClick={() => { void signInWithGoogle(); setIsOpen(false); }}>Login</button>
+              <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
             )}
           </motion.div>
         )}
@@ -119,6 +112,7 @@ const AnimatedRoutes = () => {
         <Route path="/cart" element={<Cart />} />
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/orders" element={<OrderTracking />} />
+        <Route path="/login" element={<AdminLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/inventory" element={<AdminInventory />} />

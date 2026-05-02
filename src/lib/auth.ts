@@ -74,9 +74,10 @@ export const canResetManagedAccount = (actorRole?: UserRole | null, targetRole?:
   return false;
 };
 
-
 export const getAdminHomeRoute = (role?: UserRole | null) => {
   switch (role) {
+    case 'super_admin':
+      return '/admin/staff';
     case 'promotions':
       return '/admin/promotions';
     case 'order_fulfillment':
@@ -86,4 +87,12 @@ export const getAdminHomeRoute = (role?: UserRole | null) => {
     default:
       return '/admin';
   }
+};
+
+export const getPostLoginRoute = (role?: UserRole | null) => {
+  if (!role || role === CUSTOMER_ROLE) {
+    return '/orders';
+  }
+
+  return getAdminHomeRoute(role);
 };
