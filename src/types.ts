@@ -15,6 +15,29 @@ export interface UserProfile {
   createdAt: any;
 }
 
+
+export interface StaffAccount {
+  uid: string;
+  email: string;
+  role: UserRole;
+  favorites: string[];
+  createdAt?: any;
+  disabled?: boolean;
+  lastSignInTime?: string | null;
+  creationTime?: string | null;
+}
+
+export interface StaffAccountInput {
+  email: string;
+  password: string;
+  role: Exclude<UserRole, 'customer' | 'super_admin'>;
+}
+
+export interface StaffAccountActionResult {
+  message: string;
+  resetPassword?: { newPassword: string };
+}
+
 export interface FashionItem {
   id: string;
   name: string;

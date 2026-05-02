@@ -1,136 +1,127 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { Clock, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { OrderService } from '../../services/storeService';
-import { Order, OrderStatus } from '../../types';
-import { Package, Truck, CheckCircle, Clock, ExternalLink } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import type { Order, OrderStatus } from '../../types';
 import AdminAccessNotice from '../../components/AdminAccessNotice';
+import AdminShell from '../../components/AdminShell';
+
+const statusStyles: Record<OrderStatus, string> = {
+  pending: 'bg-orange-100 text-orange-700',
+  processing: 'bg-blue-100 text-blue-700',
+  shipped: 'bg-violet-100 text-violet-700',
+  delivered: 'bg-emerald-100 text-emerald-700',
+};
 
 const AdminOrders = () => {
-  const { isAdmin } = useAuth();
+  const { canAccessOrders, role } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await OrderService.getAllOrders();
+      setOrders(data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load the order board.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const data = await OrderService.getAllOrders();
-      if (data) setOrders(data);
-      setLoading(false);
-    };
-    fetchOrders();
+    void load();
   }, []);
 
   const updateStatus = async (orderId: string, status: OrderStatus) => {
-    let tracking = "";
-    if (status === 'shipped') {
-      tracking = `ST-${Math.floor(Math.random() * 1000000)}`;
+    setSaving(true);
+    setError('');
+    try {
+      const tracking = status === 'shipped' ? `ST-${Math.floor(Math.random() * 1000000)}` : undefined;
+      await OrderService.updateOrderStatus(orderId, status, tracking);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update the order.');
+    } finally {
+      setSaving(false);
     }
-    await OrderService.updateOrderStatus(orderId, status, tracking);
-    const data = await OrderService.getAllOrders();
-    if (data) setOrders(data);
   };
 
-  if (!isAdmin) return <AdminAccessNotice />;
+  if (!canAccessOrders) return <AdminAccessNotice />;
+  if (loading) return <div className="h-screen flex items-center justify-center font-serif italic">Loading the fulfilment board...</div>;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto px-4 py-12 space-y-12"
+    <AdminShell
+      title={<><span>Order </span><span className="italic">Fulfillment</span></>}
+      subtitle={`${role?.replace('_', ' ') ?? 'Operations'} lane · manage tailoring, shipping, and customer status updates`}
     >
-      <div className="border-b border-black/10 pb-8">
-        <h1 className="text-4xl font-serif">Order <span className="italic">Fulfillment</span></h1>
-        <p className="text-[10px] uppercase tracking-widest opacity-50 mt-2">Manage customer assemblies and shipments</p>
-      </div>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-sm">{error}</div>}
 
       <div className="space-y-6">
-        {orders.length > 0 ? orders.map((order) => (
-          <div key={order.id} className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                   <h3 className="text-sm font-bold uppercase tracking-widest">Order #{order.id.slice(-6)}</h3>
-                   <span className={cn(
-                     "px-3 py-0.5 text-[8px] uppercase tracking-widest font-bold rounded-full",
-                     order.status === 'pending' ? "bg-orange-100 text-orange-600" :
-                     order.status === 'processing' ? "bg-blue-100 text-blue-600" :
-                     order.status === 'shipped' ? "bg-purple-100 text-purple-600" : "bg-green-100 text-green-600"
-                   )}>
-                     {order.status}
-                   </span>
+        {orders.map((order) => (
+          <section key={order.id} className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm space-y-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-sm uppercase tracking-[0.35em] font-bold">Order #{order.id.slice(-6)}</h2>
+                  <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.25em] font-bold ${statusStyles[order.status]}`}>
+                    {order.status}
+                  </span>
                 </div>
-                <p className="text-[10px] opacity-40 uppercase tracking-widest leading-none">Placed by {order.userId}</p>
+                <p className="text-sm opacity-60">Customer UID: {order.userId}</p>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                 <button 
-                  onClick={() => updateStatus(order.id, 'processing')}
-                  className="px-4 py-2 border border-black/10 text-[8px] uppercase font-bold tracking-widest hover:border-black transition-all"
-                 >
-                   Mark Processing
-                 </button>
-                 <button 
-                  onClick={() => updateStatus(order.id, 'shipped')}
-                  className="px-4 py-2 border border-black/10 text-[8px] uppercase font-bold tracking-widest hover:border-black transition-all"
-                 >
-                   Ship Package
-                 </button>
-                 <button 
-                  onClick={() => updateStatus(order.id, 'delivered')}
-                  className="px-4 py-2 bg-black text-white text-[8px] uppercase font-bold tracking-widest hover:bg-[#1a1a1a] transition-all"
-                 >
-                   Confirm Delivery
-                 </button>
+                <button type="button" onClick={() => void updateStatus(order.id, 'processing')} disabled={saving} className="border border-black/10 px-4 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:border-black disabled:opacity-50">Mark Processing</button>
+                <button type="button" onClick={() => void updateStatus(order.id, 'shipped')} disabled={saving} className="border border-black/10 px-4 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:border-black disabled:opacity-50">Ship Package</button>
+                <button type="button" onClick={() => void updateStatus(order.id, 'delivered')} disabled={saving} className="bg-black text-white px-4 py-3 text-[10px] uppercase tracking-[0.3em] font-bold disabled:opacity-50">Confirm Delivery</button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-black/5">
-               <div className="space-y-4">
-                  <h4 className="text-[8px] uppercase tracking-[0.2em] font-bold opacity-40">Items Summary</h4>
-                  <div className="space-y-3">
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-[#f5f2ed]/40 p-4 rounded-lg">
-                        <div>
-                          <p className="text-xs font-bold uppercase">{item.type} Material</p>
-                          <p className="text-[8px] opacity-50 uppercase tracking-widest mt-1">Quantity: {item.quantity}</p>
-                        </div>
-                        {item.measurements && (
-                           <div className="text-[8px] bg-white px-2 py-1 rounded border border-black/5">
-                              Custom Stitching Requested
-                           </div>
-                        )}
-                      </div>
-                    ))}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 border-t border-black/5">
+              <div className="space-y-4">
+                <h3 className="text-[10px] uppercase tracking-[0.3em] opacity-45">Items Summary</h3>
+                {order.items.map((item, index) => (
+                  <div key={`${order.id}-${index}`} className="bg-[#f8f4ea] rounded-2xl p-4 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.25em] font-bold">{item.type} material</p>
+                      <p className="text-sm opacity-60 mt-2">Quantity: {item.quantity}</p>
+                    </div>
+                    {item.measurements && <span className="text-[10px] uppercase tracking-[0.25em] font-bold border border-black/10 px-3 py-2 bg-white">Custom Stitching</span>}
                   </div>
-               </div>
+                ))}
+              </div>
 
-               <div className="space-y-4">
-                  <h4 className="text-[8px] uppercase tracking-[0.2em] font-bold opacity-40">Logistics Detail</h4>
-                  <div className="bg-white p-6 border border-black/5 rounded-xl space-y-4">
-                     <div className="flex items-center justify-between text-xs font-serif italic">
-                        <span>Assembly Valuation</span>
-                        <span>₹{order.totalAmount.toLocaleString()}</span>
-                     </div>
-                     {order.trackingNumber && (
-                        <div className="flex items-center gap-3 text-[10px] uppercase font-bold bg-purple-50 text-purple-600 p-3 rounded-lg">
-                           <Truck size={14} />
-                           <span>Tracking ID: {order.trackingNumber}</span>
-                        </div>
-                     )}
-                     <div className="flex items-center gap-3 text-[10px] uppercase font-bold opacity-40 p-3">
-                        <Clock size={14} />
-                        <span>Last Update: {new Date(order.createdAt?.seconds * 1000).toLocaleString()}</span>
-                     </div>
+              <div className="space-y-4">
+                <h3 className="text-[10px] uppercase tracking-[0.3em] opacity-45">Logistics Detail</h3>
+                <div className="bg-white border border-black/5 rounded-2xl p-6 space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="opacity-60">Assembly valuation</span>
+                    <span className="font-serif text-lg">₹{order.totalAmount.toLocaleString()}</span>
                   </div>
-               </div>
+                  {order.trackingNumber && (
+                    <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] font-bold text-violet-700 bg-violet-50 p-3 rounded-2xl">
+                      <Truck size={14} />
+                      Tracking ID: {order.trackingNumber}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 text-[11px] opacity-55">
+                    <Clock size={14} />
+                    Last update: {order.createdAt?.seconds ? new Date(order.createdAt.seconds * 1000).toLocaleString() : 'Recently'}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )) : (
-          <div className="py-24 text-center opacity-30 italic font-serif">The studio registry is currently clear.</div>
-        )}
+          </section>
+        ))}
+
+        {orders.length === 0 && <div className="py-24 text-center opacity-35 italic font-serif">The fulfilment board is clear right now.</div>}
       </div>
-    </motion.div>
+    </AdminShell>
   );
 };
 

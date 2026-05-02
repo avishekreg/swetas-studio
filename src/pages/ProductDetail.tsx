@@ -84,12 +84,18 @@ const ProductDetail = () => {
     if (!item) return;
     addToCart({
       id: item.id,
+      itemId: item.id,
       name: item.name,
       price: getEffectivePrice(),
       image: item.renderedImageUrl || item.fabricImageUrl,
       quantity: 1,
       type: buyingMode,
-      measurements: buyingMode === 'stitched' ? measurements : undefined
+      measurements:
+        buyingMode === 'stitched'
+          ? (Object.fromEntries(
+              Object.entries(measurements).filter(([, value]) => Boolean(value))
+            ) as Record<string, string>)
+          : undefined
     });
     navigate('/cart');
   };

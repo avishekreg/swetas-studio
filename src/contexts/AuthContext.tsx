@@ -1,15 +1,29 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../firebase';
 import { UserService } from '../services/storeService';
-import { UserProfile } from '../types';
-import { CUSTOMER_ROLE, isPrivilegedRole } from '../lib/auth';
+import { UserProfile, UserRole } from '../types';
+import {
+  CUSTOMER_ROLE,
+  canAccessDashboard,
+  canAccessInventory,
+  canAccessOrders,
+  canAccessPromotions,
+  canManageStaff,
+  isPrivilegedRole,
+} from '../lib/auth';
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
+  role: UserRole | null;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  canAccessDashboard: boolean;
+  canAccessInventory: boolean;
+  canAccessOrders: boolean;
+  canAccessPromotions: boolean;
+  canManageStaff: boolean;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmailPassword: (email: string, password: string) => Promise<void>;
@@ -26,10 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
       setUser(user);
       if (user) {
         const p = await UserService.getProfile(user.uid);
-        
+
         if (!p) {
           const newProfile: Omit<UserProfile, 'createdAt'> = {
             uid: user.uid,
@@ -68,21 +83,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = () => auth.signOut();
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile, 
-      isAdmin: isPrivilegedRole(profile?.role),
-      isSuperAdmin: profile?.role === 'super_admin',
-      loading, 
+  const role = profile?.role ?? null;
+
+  const value = useMemo(
+    () => ({
+      user,
+      profile,
+      role,
+      isAdmin: isPrivilegedRole(role),
+      isSuperAdmin: role === 'super_admin',
+      canAccessDashboard: canAccessDashboard(role),
+      canAccessInventory: canAccessInventory(role),
+      canAccessOrders: canAccessOrders(role),
+      canAccessPromotions: canAccessPromotions(role),
+      canManageStaff: canManageStaff(role),
+      loading,
       signInWithGoogle,
       signInWithEmailPassword,
       resetPassword,
-      signOut 
-    }}>
-      {children}
-    </AuthContext.Provider>
+      signOut,
+    }),
+    [user, profile, role, loading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

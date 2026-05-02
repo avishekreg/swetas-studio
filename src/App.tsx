@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { ShoppingBag, User, Heart, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
+import { ShoppingBag, User, Heart, LogOut, Menu, X } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import Home from './pages/Home';
@@ -13,12 +13,16 @@ import AdminInventory from './pages/Admin/Inventory';
 import AdminOrders from './pages/Admin/Orders';
 import AdminPromotions from './pages/Admin/Promotions';
 import AdminLogin from './pages/Admin/Login';
+import AdminStaff from './pages/Admin/Staff';
 import OrderTracking from './pages/OrderTracking';
 import Favorites from './pages/Favorites';
+import { getAdminHomeRoute, ROLE_LABELS } from './lib/auth';
 
 const Navbar = () => {
-  const { user, isAdmin, signOut, signInWithGoogle } = useAuth();
+  const { user, role, signOut, signInWithGoogle } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
+  const hasBackOfficeAccess = !!role && role !== 'customer';
+  const adminHref = getAdminHomeRoute(role);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f2ed]/90 backdrop-blur-md border-b border-black/10">
@@ -45,11 +49,10 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8 text-xs uppercase tracking-widest font-medium">
           <Link to="/collections" className="hover:text-[#D4AF37] transition-colors">Collections</Link>
-          <Link to={isAdmin ? "/admin" : "/admin/login"} className="text-[#D4AF37] hover:underline">
-            {isAdmin ? 'Admin Panel' : 'Admin Login'}
+          <Link to={hasBackOfficeAccess ? adminHref : '/admin/login'} className="text-[#D4AF37] hover:underline">
+            {hasBackOfficeAccess ? `${ROLE_LABELS[role!]} Panel` : 'Admin Login'}
           </Link>
           <div className="flex items-center space-x-6 ml-8">
             <Link to="/favorites" className="relative group">
@@ -61,7 +64,7 @@ const Navbar = () => {
             </Link>
             {user ? (
               <div className="flex items-center space-x-4">
-                <Link to={isAdmin ? "/admin" : "/orders"}><User size={20} /></Link>
+                <Link to={hasBackOfficeAccess ? adminHref : '/orders'}><User size={20} /></Link>
                 <button onClick={signOut} className="hover:text-red-500 transition-colors">
                   <LogOut size={18} />
                 </button>
@@ -74,31 +77,29 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Toggle */}
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="md:hidden bg-[#f5f2ed] border-b border-black/10 p-4 flex flex-col space-y-4 text-sm tracking-widest uppercase text-center"
           >
             <Link to="/collections" onClick={() => setIsOpen(false)}>Collections</Link>
-            <Link to={isAdmin ? "/admin" : "/admin/login"} onClick={() => setIsOpen(false)}>
-              {isAdmin ? 'Admin Panel' : 'Admin Login'}
+            <Link to={hasBackOfficeAccess ? adminHref : '/admin/login'} onClick={() => setIsOpen(false)}>
+              {hasBackOfficeAccess ? `${ROLE_LABELS[role!]} Panel` : 'Admin Login'}
             </Link>
             <Link to="/favorites" onClick={() => setIsOpen(false)}>Favorites</Link>
             <Link to="/cart" onClick={() => setIsOpen(false)}>Cart</Link>
             {user ? (
-              <button onClick={() => { signOut(); setIsOpen(false); }} className="text-red-500">Logout</button>
+              <button onClick={() => { void signOut(); setIsOpen(false); }} className="text-red-500">Logout</button>
             ) : (
-              <button onClick={() => { signInWithGoogle(); setIsOpen(false); }}>Login</button>
+              <button onClick={() => { void signInWithGoogle(); setIsOpen(false); }}>Login</button>
             )}
           </motion.div>
         )}
@@ -119,12 +120,11 @@ const AnimatedRoutes = () => {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/orders" element={<OrderTracking />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        
-        {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/inventory" element={<AdminInventory />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/promotions" element={<AdminPromotions />} />
+        <Route path="/admin/staff" element={<AdminStaff />} />
       </Routes>
     </AnimatePresence>
   );
@@ -132,20 +132,16 @@ const AnimatedRoutes = () => {
 
 export default function App() {
   useEffect(() => {
-    // 1. Disable Right Click (Context Menu)
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
     };
 
-    // 2. Disable Keyboard Shortcuts for Saving/Printing/Source
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Disable PrintScreen
       if (e.key === 'PrintScreen') {
         alert('Screenshots are discouraged to protect our artisans\' original designs.');
-        navigator.clipboard.writeText(''); // Clear clipboard if possible
+        navigator.clipboard.writeText('');
       }
 
-      // Disable Ctrl+S, Ctrl+P, Ctrl+U, Ctrl+Shift+I (DevTools)
       if (
         (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'u')) ||
         (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'j' || e.key === 'c')) ||

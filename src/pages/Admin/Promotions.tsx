@@ -1,212 +1,168 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import React, { useEffect, useState } from 'react';
+import { Calendar, CheckCircle2, Percent, Tag, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { PromotionService } from '../../services/storeService';
-import { Promotion } from '../../types';
-import { Plus, Trash2, Calendar, Tag, Percent, CheckCircle2 } from 'lucide-react';
+import type { Promotion } from '../../types';
 import AdminAccessNotice from '../../components/AdminAccessNotice';
+import AdminShell from '../../components/AdminShell';
+
+const emptyPromo: Omit<Promotion, 'id' | 'createdAt'> = {
+  title: '',
+  description: '',
+  discountType: 'percentage',
+  discountValue: 0,
+  startDate: '',
+  endDate: '',
+  isActive: true,
+  applicableCategories: [],
+};
 
 const AdminPromotions = () => {
-  const { isAdmin } = useAuth();
+  const { canAccessPromotions } = useAuth();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newPromo, setNewPromo] = useState<Omit<Promotion, 'id' | 'createdAt'>>({
-    title: '',
-    description: '',
-    discountType: 'percentage',
-    discountValue: 0,
-    startDate: '',
-    endDate: '',
-    isActive: true,
-    applicableCategories: []
-  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [newPromo, setNewPromo] = useState<Omit<Promotion, 'id' | 'createdAt'>>(emptyPromo);
 
-  useEffect(() => {
-    fetchPromotions();
-  }, []);
-
-  const fetchPromotions = async () => {
-    const data = await PromotionService.getAllPromotions();
-    if (data) setPromotions(data);
-    setLoading(false);
-  };
-
-  const handleAddPromotion = async () => {
+  const load = async () => {
     setLoading(true);
-    await PromotionService.addPromotion(newPromo);
-    setNewPromo({
-      title: '',
-      description: '',
-      discountType: 'percentage',
-      discountValue: 0,
-      startDate: '',
-      endDate: '',
-      isActive: true,
-      applicableCategories: []
-    });
-    fetchPromotions();
-  };
-
-  const handleDeletePromotion = async (id: string) => {
-    if (confirm('Delete this promotion?')) {
-      setLoading(true);
-      await PromotionService.deletePromotion(id);
-      fetchPromotions();
+    setError('');
+    try {
+      const data = await PromotionService.getAllPromotions();
+      setPromotions(data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load campaign planning right now.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isAdmin) return <AdminAccessNotice />;
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const handleAddPromotion = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      await PromotionService.addPromotion(newPromo);
+      setNewPromo(emptyPromo);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to launch the promotion.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeletePromotion = async (id: string) => {
+    setSaving(true);
+    setError('');
+    try {
+      await PromotionService.deletePromotion(id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to remove the promotion.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!canAccessPromotions) return <AdminAccessNotice />;
+  if (loading) return <div className="h-screen flex items-center justify-center font-serif italic">Reviewing the offer board...</div>;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto px-4 py-12 space-y-16"
+    <AdminShell
+      title={<><span>Offers & </span><span className="italic">Festive Sales</span></>}
+      subtitle="Launch polished campaigns for bridal drops, seasonal edits, and private client incentives"
     >
-      <div className="flex items-end justify-between border-b border-black/10 pb-8">
-        <div>
-          <h1 className="text-4xl font-serif">Offers & <span className="italic">Festive Sales</span></h1>
-          <p className="text-[10px] uppercase tracking-widest opacity-50 mt-2">Manage seasonal promotions and discounts</p>
-        </div>
-      </div>
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-sm">{error}</div>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-        {/* Left: Create Promotion */}
-        <section className="space-y-8 bg-white/40 p-8 rounded-2xl backdrop-blur-sm shadow-xl border border-white/20">
-          <h2 className="text-xl font-serif flex items-center gap-2">
-            <Tag size={20} className="text-[#D4AF37]" />
-            New Campaign
-          </h2>
-
-          <div className="space-y-6">
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Offer Title</label>
-              <input 
-                type="text" 
-                value={newPromo.title}
-                onChange={e => setNewPromo(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="E.g. Diwali Splendor Sale"
-                className="w-full bg-white px-4 py-3 text-sm border-b border-black/10 outline-none focus:border-[#D4AF37] transition-all"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Description</label>
-              <textarea 
-                value={newPromo.description}
-                onChange={e => setNewPromo(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="E.g. Celebrate with 20% off on all bridal wear."
-                className="w-full bg-white px-4 py-3 text-sm border-b border-black/10 outline-none focus:border-[#D4AF37] transition-all min-h-[80px]"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Discount Type</label>
-                <select 
-                  value={newPromo.discountType}
-                  onChange={e => setNewPromo(prev => ({ ...prev, discountType: e.target.value as any }))}
-                  className="w-full bg-white px-4 py-3 text-sm border-b border-black/10 outline-none focus:border-[#D4AF37] transition-all"
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount (INR)</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Value</label>
-                <input 
-                  type="number" 
-                  value={newPromo.discountValue}
-                  onChange={e => setNewPromo(prev => ({ ...prev, discountValue: Number(e.target.value) }))}
-                  className="w-full bg-white px-4 py-3 text-sm border-b border-black/10 outline-none focus:border-[#D4AF37] transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-60 text-emerald-600 flex items-center gap-1">
-                  <Calendar size={12} /> Start Date
-                </label>
-                <input 
-                  type="date" 
-                  value={newPromo.startDate}
-                  onChange={e => setNewPromo(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full bg-white px-4 py-3 text-sm border-b border-black/10 outline-none focus:border-[#D4AF37] transition-all"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-60 text-red-600 flex items-center gap-1">
-                  <Calendar size={12} /> End Date
-                </label>
-                <input 
-                  type="date" 
-                  value={newPromo.endDate}
-                  onChange={e => setNewPromo(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full bg-white px-4 py-3 text-sm border-b border-black/10 outline-none focus:border-[#D4AF37] transition-all"
-                />
-              </div>
-            </div>
-
-            <button 
-              onClick={handleAddPromotion}
-              disabled={loading || !newPromo.title}
-              className="w-full bg-[#1a1a1a] text-white py-5 text-[10px] tracking-widest uppercase font-bold hover:bg-black disabled:opacity-50 transition-all shadow-lg"
-            >
-              Launch Promotion
-            </button>
+      <div className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-8">
+        <section className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm space-y-6">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] opacity-45">Campaign Builder</p>
+            <h2 className="text-2xl font-serif mt-2">Create a new promotion</h2>
           </div>
+
+          <label className="block space-y-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Offer Title</span>
+            <input value={newPromo.title} onChange={(e) => setNewPromo((current) => ({ ...current, title: e.target.value }))} className="w-full border border-black/10 px-4 py-3 outline-none focus:border-[#D4AF37]" />
+          </label>
+          <label className="block space-y-2">
+            <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Description</span>
+            <textarea value={newPromo.description} onChange={(e) => setNewPromo((current) => ({ ...current, description: e.target.value }))} className="w-full min-h-[120px] border border-black/10 px-4 py-3 outline-none focus:border-[#D4AF37]" />
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Discount Type</span>
+              <select value={newPromo.discountType} onChange={(e) => setNewPromo((current) => ({ ...current, discountType: e.target.value as Promotion['discountType'] }))} className="w-full border border-black/10 px-4 py-3 bg-white outline-none focus:border-[#D4AF37]">
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (INR)</option>
+              </select>
+            </label>
+            <label className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Discount Value</span>
+              <input type="number" value={newPromo.discountValue} onChange={(e) => setNewPromo((current) => ({ ...current, discountValue: Number(e.target.value) }))} className="w-full border border-black/10 px-4 py-3 outline-none focus:border-[#D4AF37]" />
+            </label>
+            <label className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Start Date</span>
+              <input type="date" value={newPromo.startDate as string} onChange={(e) => setNewPromo((current) => ({ ...current, startDate: e.target.value }))} className="w-full border border-black/10 px-4 py-3 outline-none focus:border-[#D4AF37]" />
+            </label>
+            <label className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">End Date</span>
+              <input type="date" value={newPromo.endDate as string} onChange={(e) => setNewPromo((current) => ({ ...current, endDate: e.target.value }))} className="w-full border border-black/10 px-4 py-3 outline-none focus:border-[#D4AF37]" />
+            </label>
+          </div>
+
+          <button type="button" onClick={() => void handleAddPromotion()} disabled={saving || !newPromo.title} className="w-full bg-black text-white py-4 uppercase text-[10px] tracking-[0.35em] font-bold disabled:opacity-50">
+            Launch Promotion
+          </button>
         </section>
 
-        {/* Right: Active Promotions */}
-        <section className="space-y-8">
-          <h2 className="text-xl font-serif">Active Campaigns</h2>
-          <div className="space-y-6">
-            {promotions.length === 0 ? (
-              <div className="p-12 text-center border-2 border-dashed border-black/5 rounded-2xl opacity-40">
-                <Percent size={32} className="mx-auto mb-4" />
-                <p className="text-xs uppercase tracking-widest">No promotions active</p>
-              </div>
-            ) : (
-              promotions.map(promo => (
-                <div key={promo.id} className="relative bg-white p-6 rounded-2xl shadow-sm border border-black/5 flex flex-col gap-4 group hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-serif text-lg text-[#1a1a1a]">{promo.title}</h3>
-                      <p className="text-xs opacity-60 mt-1 line-clamp-2">{promo.description}</p>
-                    </div>
-                    <button 
-                      onClick={() => handleDeletePromotion(promo.id)}
-                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+        <section className="bg-white p-8 rounded-2xl border border-black/5 shadow-sm space-y-6">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] opacity-45">Live Campaigns</p>
+            <h2 className="text-2xl font-serif mt-2">Current offer stack</h2>
+          </div>
 
-                  <div className="flex flex-wrap gap-4 items-center">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full">
-                      <Percent size={12} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">
-                        {promo.discountValue}{promo.discountType === 'percentage' ? '%' : ' INR'} OFF
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] opacity-40 uppercase tracking-widest">
-                      <Calendar size={12} />
-                      {new Date(promo.startDate).toLocaleDateString()} - {new Date(promo.endDate).toLocaleDateString()}
-                    </div>
-                    {promo.isActive && (
-                      <div className="ml-auto flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                        <CheckCircle2 size={10} /> Active Now
-                      </div>
-                    )}
+          <div className="space-y-4">
+            {promotions.map((promo) => (
+              <article key={promo.id} className="border border-black/5 rounded-2xl p-5 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-serif text-xl">{promo.title}</h3>
+                    <p className="text-sm opacity-60 mt-2">{promo.description}</p>
                   </div>
+                  <button type="button" onClick={() => void handleDeletePromotion(promo.id)} className="border border-red-200 text-red-600 p-3 rounded-xl hover:bg-red-50">
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-              ))
-            )}
+                <div className="flex flex-wrap gap-3 items-center">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] uppercase tracking-[0.25em] font-bold">
+                    <Percent size={12} />
+                    {promo.discountValue}{promo.discountType === 'percentage' ? '%' : ' INR'} off
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] opacity-55">
+                    <Calendar size={12} />
+                    {promo.startDate ? new Date(promo.startDate).toLocaleDateString() : 'Start'} - {promo.endDate ? new Date(promo.endDate).toLocaleDateString() : 'End'}
+                  </span>
+                  {promo.isActive && (
+                    <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-[#D4AF37]">
+                      <CheckCircle2 size={12} />
+                      Active Now
+                    </span>
+                  )}
+                </div>
+              </article>
+            ))}
+
+            {promotions.length === 0 && <div className="py-24 text-center opacity-35 italic font-serif">No promotions are active yet.</div>}
           </div>
         </section>
       </div>
-    </motion.div>
+    </AdminShell>
   );
 };
 

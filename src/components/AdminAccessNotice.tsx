@@ -1,14 +1,23 @@
+import { Link } from 'react-router-dom';
+
 const AdminAccessNotice = () => {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-      <div className="bg-white border border-black/5 shadow-sm p-8 md:p-10 space-y-4">
+    <div className="max-w-3xl mx-auto px-4 py-20">
+      <div className="bg-white border border-black/5 shadow-sm p-8 md:p-10 space-y-5">
         <p className="text-[10px] uppercase tracking-[0.35em] opacity-50">Admin Access Required</p>
-        <h1 className="text-3xl md:text-4xl font-serif">This section is reserved for the studio owner.</h1>
-        <p className="text-sm leading-relaxed opacity-65">
-          Sign in through the dedicated admin login, then mark that user's record as
-          <code className="mx-1">role: "admin"</code>
-          in Firebase. Super admin remains your recovery path, and new sign-ins are created as customers by default for safety.
+        <h1 className="text-3xl font-serif">This workspace needs an assigned internal role first.</h1>
+        <p className="text-sm opacity-70 leading-relaxed">
+          Sign in through the dedicated admin login and make sure the Firebase user profile is marked with one of the internal roles.
+          Admin and super admin accounts can also provision staff seats from the team access hub.
         </p>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/admin/login" className="bg-black text-white px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-bold">
+            Go To Admin Login
+          </Link>
+          <Link to="/" className="border border-black/10 px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:border-black">
+            Back To Storefront
+          </Link>
+        </div>
       </div>
     </div>
   );

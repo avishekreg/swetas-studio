@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, KeyRound, Mail } from 'lucide-react';
+import { AlertCircle, KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getAdminHomeRoute, ROLE_LABELS } from '../../lib/auth';
 
 const AdminLogin = () => {
-  const { signInWithEmailPassword, resetPassword, isAdmin, loading, user, profile } = useAuth();
+  const { signInWithEmailPassword, resetPassword, loading, user, profile, role } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,11 +14,14 @@ const AdminLogin = () => {
   const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const hasBackOfficeAccess = !!role && role !== 'customer';
+  const targetRoute = useMemo(() => getAdminHomeRoute(role), [role]);
+
   useEffect(() => {
-    if (!loading && isAdmin) {
-      navigate('/admin', { replace: true });
+    if (!loading && hasBackOfficeAccess) {
+      navigate(targetRoute, { replace: true });
     }
-  }, [isAdmin, loading, navigate]);
+  }, [hasBackOfficeAccess, loading, navigate, targetRoute]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,32 +61,34 @@ const AdminLogin = () => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-5xl mx-auto px-4 py-16 lg:py-24"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-5xl mx-auto px-4 py-16 lg:py-24">
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 items-start">
         <section className="space-y-6">
           <p className="text-[10px] uppercase tracking-[0.35em] opacity-50">Studio Access</p>
-          <h1 className="text-4xl md:text-5xl font-serif leading-tight">
-            Default admin login for the boutique team.
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-serif leading-tight">Default admin login for the boutique team.</h1>
           <p className="text-sm leading-relaxed opacity-65 max-w-xl">
             This login is for internal staff only. Customer accounts never receive admin access by default.
-            Admin and super admin rights come from assigned roles, not from email shortcuts.
+            Roles shape the experience: admins handle daily operations, while the super admin keeps recovery control in reserve.
           </p>
           <div className="bg-white border border-black/5 shadow-sm p-6 space-y-3">
             <h2 className="text-sm uppercase tracking-widest font-bold opacity-60">Access model</h2>
             <p className="text-sm opacity-70">
-              `super_admin` remains your recovery path. `admin` is the client's daily operating account.
-              Additional staff roles can be added next without exposing super admin controls.
+              <code>super_admin</code> stays as the recovery lane. <code>admin</code> is the client's daily operating account.
+              Staff specialists can land directly in orders or promotions without seeing the full dashboard.
             </p>
-            {user && !loading && !isAdmin && (
+            {user && !loading && !hasBackOfficeAccess && (
               <div className="flex items-start gap-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 p-4">
                 <AlertCircle size={18} className="mt-0.5 shrink-0" />
                 <p>
-                  Signed in as <strong>{profile?.email || user.email}</strong>, but this account is not provisioned for admin access yet.
+                  Signed in as <strong>{profile?.email || user.email}</strong>, but this account is not provisioned for the internal back office yet.
+                </p>
+              </div>
+            )}
+            {user && hasBackOfficeAccess && (
+              <div className="flex items-start gap-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 p-4">
+                <ShieldCheck size={18} className="mt-0.5 shrink-0" />
+                <p>
+                  Signed in as <strong>{profile?.email || user.email}</strong> with the <strong>{ROLE_LABELS[role!]}</strong> role.
                 </p>
               </div>
             )}
@@ -100,13 +106,7 @@ const AdminLogin = () => {
               <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Email</span>
               <div className="flex items-center gap-3 border border-black/10 px-4 py-3">
                 <Mail size={16} className="opacity-40" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent outline-none text-sm"
-                  placeholder="admin@swetasstudio.com"
-                />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="admin@swetasstudio.com" />
               </div>
             </label>
 
@@ -114,13 +114,7 @@ const AdminLogin = () => {
               <span className="text-[10px] uppercase tracking-[0.3em] opacity-50">Password</span>
               <div className="flex items-center gap-3 border border-black/10 px-4 py-3">
                 <KeyRound size={16} className="opacity-40" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent outline-none text-sm"
-                  placeholder="Enter your password"
-                />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent outline-none text-sm" placeholder="Enter your password" />
               </div>
             </label>
 
@@ -128,26 +122,17 @@ const AdminLogin = () => {
             {notice && <p className="text-sm text-emerald-700">{notice}</p>}
 
             <div className="space-y-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-black text-white py-4 uppercase text-[10px] tracking-[0.35em] font-bold disabled:opacity-50"
-              >
+              <button type="submit" disabled={submitting} className="w-full bg-black text-white py-4 uppercase text-[10px] tracking-[0.35em] font-bold disabled:opacity-50">
                 {submitting ? 'Signing In...' : 'Admin Login'}
               </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={submitting}
-                className="w-full border border-black/10 py-4 uppercase text-[10px] tracking-[0.35em] font-bold hover:border-black disabled:opacity-50"
-              >
+              <button type="button" onClick={() => void handleReset()} disabled={submitting} className="w-full border border-black/10 py-4 uppercase text-[10px] tracking-[0.35em] font-bold hover:border-black disabled:opacity-50">
                 Reset Password
               </button>
             </div>
           </form>
 
           <p className="text-[11px] opacity-45 leading-relaxed">
-            If the client forgets both login and password, the super admin account remains the recovery path until we add the secure staff-management backend.
+            Super admin recovery controls now live in the team access hub, where admin passwords and staff roles can be rotated without touching the storefront flow.
           </p>
           <Link to="/" className="inline-block text-[10px] uppercase tracking-[0.35em] opacity-50 hover:opacity-100">
             Back To Storefront

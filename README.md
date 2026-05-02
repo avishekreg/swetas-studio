@@ -1,20 +1,40 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Sweta's Studio
 
-# Run and deploy your AI Studio app
+Boutique storefront and back-office app built with Vite, React, Firebase, and Netlify.
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/d29633d9-6f61-4611-a0e6-17f3f0b59e6e
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+## Local development
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Start the app:
    `npm run dev`
+3. Verify types:
+   `npm run lint`
+
+## Netlify deployment
+
+Build settings:
+- Build command: `npm run build`
+- Publish directory: `dist`
+- Functions directory: `netlify/functions`
+
+## Firebase access model
+
+Current internal roles:
+- `super_admin`: recovery lane, admin resets, access governance
+- `admin`: daily boutique operations and limited staff management
+- `order_fulfillment`
+- `shipping`
+- `customer_care`
+- `promotions`
+- `customer`
+
+## Required Netlify environment variables for secure staff controls
+
+Set these in Netlify before using the super-admin recovery tools:
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_DATABASE_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+
+These power the server-side staff management function in `netlify/functions/admin-users.mjs`.
