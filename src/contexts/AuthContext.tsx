@@ -6,6 +6,7 @@ import { UserProfile, UserRole } from '../types';
 import {
   CUSTOMER_ROLE,
   canAccessDashboard,
+  canAccessAccounts,
   canAccessInventory,
   canAccessOrders,
   canAccessPromotions,
@@ -20,6 +21,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   canAccessDashboard: boolean;
+  canAccessAccounts: boolean;
   canAccessInventory: boolean;
   canAccessOrders: boolean;
   canAccessPromotions: boolean;
@@ -93,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAdmin: isPrivilegedRole(role),
       isSuperAdmin: role === 'super_admin',
       canAccessDashboard: canAccessDashboard(role),
+      canAccessAccounts: canAccessAccounts(role),
       canAccessInventory: canAccessInventory(role),
       canAccessOrders: canAccessOrders(role),
       canAccessPromotions: canAccessPromotions(role),

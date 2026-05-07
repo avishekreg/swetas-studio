@@ -14,7 +14,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
-import { FashionItem, Order, UserProfile, OrderStatus, Promotion } from '../types';
+import { FashionItem, Order, UserProfile, OrderStatus, Promotion, AccountsSettings, AccountingEntry } from '../types';
 
 enum OperationType {
   CREATE = 'create',
@@ -255,4 +255,97 @@ export const PromotionService = {
       handleFirestoreError(error, OperationType.DELETE, path);
     }
   }
+};
+
+
+const defaultAccountsSettings: AccountsSettings = {
+  legalName: "Sweta's Studio",
+  tradeName: "Sweta's Studio",
+  gstin: '',
+  stateCode: '27',
+  stateName: 'Maharashtra',
+  invoicePrefix: 'SWS',
+  nextInvoiceNumber: 1,
+  financialYearLabel: '2026-27',
+  defaultGstRate: 5,
+  defaultTaxMode: 'intra_state',
+};
+
+export const AccountsService = {
+  async getSettings() {
+    const path = 'accountsSettings/current';
+    try {
+      const docRef = doc(db, 'accountsSettings', 'current');
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        return { ...defaultAccountsSettings, ...snapshot.data() } as AccountsSettings;
+      }
+      return defaultAccountsSettings;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  },
+
+  async saveSettings(settings: AccountsSettings) {
+    const path = 'accountsSettings/current';
+    try {
+      const docRef = doc(db, 'accountsSettings', 'current');
+      await setDoc(
+        docRef,
+        {
+          ...settings,
+          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
+    }
+  },
+
+  async getEntries() {
+    const path = 'accountsEntries';
+    try {
+      const q = query(collection(db, path), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as AccountingEntry));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  },
+
+  async addEntry(entry: Omit<AccountingEntry, 'id' | 'createdAt' | 'updatedAt'>) {
+    const path = 'accountsEntries';
+    try {
+      const docRef = await addDoc(collection(db, path), {
+        ...entry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
+  },
+
+  async updateEntry(id: string, updates: Partial<AccountingEntry>) {
+    const path = `accountsEntries/${id}`;
+    try {
+      const docRef = doc(db, 'accountsEntries', id);
+      await updateDoc(docRef, { ...updates, updatedAt: serverTimestamp() });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  },
+
+  async deleteEntry(id: string) {
+    const path = `accountsEntries/${id}`;
+    try {
+      const docRef = doc(db, 'accountsEntries', id);
+      await deleteDoc(docRef);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
+    }
+  },
 };

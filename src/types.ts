@@ -96,3 +96,47 @@ export interface Measurements {
   length?: string;
   sleeveLength?: string;
 }
+
+
+export type GSTRate = 0 | 3 | 5 | 12 | 18 | 28;
+export type GSTTaxMode = 'intra_state' | 'inter_state';
+export type InvoicePaymentStatus = 'unpaid' | 'partial' | 'paid';
+
+export interface AccountsSettings {
+  legalName: string;
+  tradeName: string;
+  gstin: string;
+  stateCode: string;
+  stateName: string;
+  invoicePrefix: string;
+  nextInvoiceNumber: number;
+  financialYearLabel: string;
+  defaultGstRate: GSTRate;
+  defaultTaxMode: GSTTaxMode;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export interface AccountingEntry {
+  id: string;
+  sourceOrderId?: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  customerName: string;
+  customerEmail?: string;
+  customerGstin?: string;
+  placeOfSupply: string;
+  itemSummary: string;
+  taxableAmount: number;
+  gstRate: GSTRate;
+  taxMode: GSTTaxMode;
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
+  totalAmount: number;
+  paymentStatus: InvoicePaymentStatus;
+  paymentMethod: string;
+  notes?: string;
+  createdAt: any;
+  updatedAt?: any;
+}

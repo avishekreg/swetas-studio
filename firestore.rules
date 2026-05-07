@@ -73,6 +73,51 @@ service cloud.firestore {
       allow delete: if isPrivileged();
     }
 
+
+
+    // --- Collection: Accounts Settings ---
+    function isValidAccountsSettings(data) {
+      return data.legalName is string &&
+             data.tradeName is string &&
+             data.gstin is string &&
+             data.stateCode is string &&
+             data.stateName is string &&
+             data.invoicePrefix is string &&
+             data.nextInvoiceNumber is number &&
+             data.financialYearLabel is string &&
+             data.defaultGstRate is number &&
+             data.defaultTaxMode in ['intra_state', 'inter_state'];
+    }
+
+    match /accountsSettings/{docId} {
+      allow read: if isPrivileged();
+      allow create, update: if isPrivileged() && isValidAccountsSettings(incoming());
+      allow delete: if false;
+    }
+
+    // --- Collection: Accounts Entries ---
+    function isValidAccountsEntry(data) {
+      return data.invoiceNumber is string &&
+             data.invoiceDate is string &&
+             data.customerName is string &&
+             data.placeOfSupply is string &&
+             data.itemSummary is string &&
+             data.taxableAmount is number &&
+             data.gstRate is number &&
+             data.taxMode in ['intra_state', 'inter_state'] &&
+             data.cgstAmount is number &&
+             data.sgstAmount is number &&
+             data.igstAmount is number &&
+             data.totalAmount is number &&
+             data.paymentStatus in ['unpaid', 'partial', 'paid'] &&
+             data.paymentMethod is string;
+    }
+
+    match /accountsEntries/{entryId} {
+      allow read: if isPrivileged();
+      allow create, update: if isPrivileged() && isValidAccountsEntry(incoming());
+      allow delete: if isPrivileged();
+    }
     // --- Collection: Orders ---
     function isValidOrder(data) {
       return data.userId == request.auth.uid &&

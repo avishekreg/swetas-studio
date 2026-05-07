@@ -122,6 +122,7 @@ const AdminDashboard = () => {
             {seeding ? 'Seeding...' : 'Seed Sample Designs'}
           </button>
           <Link to="/admin/inventory" className="border border-black px-6 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-black hover:text-white transition-all">Manage Inventory</Link>
+          <Link to="/admin/accounts" className="border border-black px-6 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-black hover:text-white transition-all">Open Accounts</Link>
           <Link to="/admin/promotions" className="border border-[#D4AF37] text-[#D4AF37] px-6 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-[#D4AF37] hover:text-white transition-all">Sales & Offers</Link>
           <Link to="/admin/orders" className="bg-black text-white px-6 py-3 text-[10px] uppercase tracking-[0.3em] font-bold">Process Orders</Link>
         </>

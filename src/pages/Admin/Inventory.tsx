@@ -37,6 +37,8 @@ const AdminInventory = () => {
   const [error, setError] = useState('');
   const [aiResult, setAiResult] = useState<{ description?: string; suggestedStyles?: string[] } | null>(null);
   const [previewDescription, setPreviewDescription] = useState('');
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [newItem, setNewItem] = useState<Omit<FashionItem, 'id' | 'createdAt'>>(emptyItem);
 
   const categories = useMemo(
@@ -126,10 +128,32 @@ const AdminInventory = () => {
   };
 
   const deleteItem = async (id: string) => {
+    setPendingDeleteIds([id]);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedItemIds((current) =>
+      current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedItemIds((current) => (current.length === items.length ? [] : items.map((item) => item.id)));
+  };
+
+  const openBulkDelete = () => {
+    if (selectedItemIds.length === 0) return;
+    setPendingDeleteIds(selectedItemIds);
+  };
+
+  const confirmDelete = async () => {
+    if (pendingDeleteIds.length === 0) return;
     setSaving(true);
     setError('');
     try {
-      await ItemService.deleteItem(id);
+      await Promise.all(pendingDeleteIds.map((id) => ItemService.deleteItem(id)));
+      setSelectedItemIds((current) => current.filter((id) => !pendingDeleteIds.includes(id)));
+      setPendingDeleteIds([]);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to remove the design concept.');
@@ -251,12 +275,45 @@ const AdminInventory = () => {
               <p className="text-[10px] uppercase tracking-[0.3em] opacity-45">Current Collection</p>
               <h2 className="text-2xl font-serif mt-2">Active designs</h2>
             </div>
-            <span className="text-[10px] uppercase tracking-[0.3em] opacity-45">{items.length} live pieces</span>
+            <div className="flex items-center gap-3">
+              {items.length > 0 && (
+                <label className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] opacity-55">
+                  <input
+                    type="checkbox"
+                    checked={items.length > 0 && selectedItemIds.length === items.length}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 accent-black"
+                  />
+                  Select All
+                </label>
+              )}
+              {selectedItemIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={openBulkDelete}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-[10px] uppercase tracking-[0.25em] font-bold hover:bg-red-50 disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  Delete Selected ({selectedItemIds.length})
+                </button>
+              )}
+              <span className="text-[10px] uppercase tracking-[0.3em] opacity-45">{items.length} live pieces</span>
+            </div>
           </div>
 
           <div className="space-y-4 max-h-[900px] overflow-auto pr-1">
             {items.map((item) => (
-              <article key={item.id} className="grid grid-cols-[92px_1fr_auto] gap-4 items-center border border-black/5 rounded-2xl p-4">
+              <article key={item.id} className="grid grid-cols-[auto_92px_1fr_auto] gap-4 items-center border border-black/5 rounded-2xl p-4">
+                <label className="flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedItemIds.includes(item.id)}
+                    onChange={() => toggleSelection(item.id)}
+                    className="h-4 w-4 accent-black"
+                    aria-label={`Select ${item.name}`}
+                  />
+                </label>
                 <img src={item.renderedImageUrl || item.fabricImageUrl} alt={item.name} className="w-[92px] h-[92px] object-cover rounded-2xl" />
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -282,6 +339,42 @@ const AdminInventory = () => {
           </div>
         </section>
       </div>
+
+      {pendingDeleteIds.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[2px] flex items-center justify-center p-6">
+          <div className="w-full max-w-xl rounded-[2rem] bg-white border border-black/5 shadow-2xl p-8 space-y-6">
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-[0.3em] opacity-45">Delete Confirmation</p>
+              <h3 className="text-3xl font-serif">Remove selected couture designs?</h3>
+              <p className="text-sm opacity-65">
+                {pendingDeleteIds.length === 1
+                  ? 'This design will be permanently removed from the boutique collection.'
+                  : `${pendingDeleteIds.length} selected designs will be permanently removed from the boutique collection.`}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteIds([])}
+                disabled={saving}
+                className="border border-black/10 px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-bold hover:border-black disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDelete()}
+                disabled={saving}
+                className="inline-flex items-center gap-2 bg-black text-white px-5 py-3 text-[10px] uppercase tracking-[0.3em] font-bold disabled:opacity-50"
+              >
+                <Trash2 size={14} />
+                {saving ? 'Deleting...' : pendingDeleteIds.length === 1 ? 'Delete Design' : `Delete ${pendingDeleteIds.length} Designs`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminShell>
   );
 };

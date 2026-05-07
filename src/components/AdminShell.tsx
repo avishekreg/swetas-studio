@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   ROLE_LABELS,
   SUPER_ADMIN_ROLE,
+  canAccessAccounts,
   canAccessInventory,
   canAccessOrders,
   canAccessPromotions,
@@ -26,6 +27,7 @@ const AdminShell: React.FC<AdminShellProps> = ({ title, subtitle, actions, child
 
   const navItems = [
     { to: '/admin', label: 'Dashboard', show: true },
+    { to: '/admin/accounts', label: 'Accounts', show: canAccessAccounts(role) },
     { to: '/admin/inventory', label: 'Inventory', show: canAccessInventory(role) },
     { to: '/admin/orders', label: 'Orders', show: canAccessOrders(role) },
     { to: '/admin/promotions', label: 'Offers', show: canAccessPromotions(role) },

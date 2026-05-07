@@ -29,6 +29,7 @@ export const canAccessPromotions = (role?: UserRole | null) =>
 export const canAccessOrders = (role?: UserRole | null) =>
   role === SUPER_ADMIN_ROLE || role === ADMIN_ROLE || role === 'order_fulfillment' || role === 'shipping' || role === 'customer_care';
 export const canAccessDashboard = (role?: UserRole | null) => role === SUPER_ADMIN_ROLE || role === ADMIN_ROLE;
+export const canAccessAccounts = (role?: UserRole | null) => role === SUPER_ADMIN_ROLE || role === ADMIN_ROLE;
 
 export const getAssignableRoles = (actorRole?: UserRole | null): UserRole[] => {
   if (actorRole === SUPER_ADMIN_ROLE) {

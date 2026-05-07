@@ -10,6 +10,7 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminInventory from './pages/Admin/Inventory';
+import AdminAccounts from './pages/Admin/Accounts';
 import AdminOrders from './pages/Admin/Orders';
 import AdminPromotions from './pages/Admin/Promotions';
 import AdminLogin from './pages/Admin/Login';
@@ -116,6 +117,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/inventory" element={<AdminInventory />} />
+        <Route path="/admin/accounts" element={<AdminAccounts />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/promotions" element={<AdminPromotions />} />
         <Route path="/admin/staff" element={<AdminStaff />} />
