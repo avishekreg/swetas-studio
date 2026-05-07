@@ -53,7 +53,8 @@ service cloud.firestore {
 
     match /items/{itemId} {
       allow read: if true; // Publicly browse-able
-      allow write: if isPrivileged() && isValidItem(incoming());
+      allow create, update: if isPrivileged() && isValidItem(incoming());
+      allow delete: if isPrivileged();
     }
 
     // --- Collection: Promotions ---
@@ -68,7 +69,8 @@ service cloud.firestore {
 
     match /promotions/{promoId} {
       allow read: if true;
-      allow write: if isPrivileged() && isValidPromotion(incoming());
+      allow create, update: if isPrivileged() && isValidPromotion(incoming());
+      allow delete: if isPrivileged();
     }
 
     // --- Collection: Orders ---

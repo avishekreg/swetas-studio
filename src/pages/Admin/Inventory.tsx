@@ -20,6 +20,15 @@ const emptyItem: Omit<FashionItem, 'id' | 'createdAt'> = {
   styles: [],
 };
 
+
+const previewFallbackStyles = ['Bridal Couture', 'Reception Gown', 'Festive Lehenga'];
+
+function parseImageData(dataUrl: string) {
+  const [metadata, base64Data = ''] = dataUrl.split(',');
+  const mimeType = metadata.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+  return { base64Data, mimeType };
+}
+
 const AdminInventory = () => {
   const { canAccessInventory, role } = useAuth();
   const [items, setItems] = useState<FashionItem[]>([]);
@@ -27,6 +36,7 @@ const AdminInventory = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [aiResult, setAiResult] = useState<{ description?: string; suggestedStyles?: string[] } | null>(null);
+  const [previewDescription, setPreviewDescription] = useState('');
   const [newItem, setNewItem] = useState<Omit<FashionItem, 'id' | 'createdAt'>>(emptyItem);
 
   const categories = useMemo(
@@ -64,13 +74,13 @@ const AdminInventory = () => {
     setSaving(true);
     setError('');
     try {
-      const base64Data = newItem.fabricImageUrl.split(',')[1];
-      const result = await analyzeFabric(base64Data);
+      const { base64Data, mimeType } = parseImageData(newItem.fabricImageUrl);
+      const result = await analyzeFabric(base64Data, mimeType);
       setAiResult(result);
       setNewItem((current) => ({
         ...current,
         description: result.description ?? current.description,
-        styles: result.suggestedStyles ?? current.styles,
+        styles: (result.suggestedStyles && result.suggestedStyles.length > 0 ? result.suggestedStyles : previewFallbackStyles) ?? current.styles,
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The AI atelier could not analyse this fabric just now.');
@@ -84,13 +94,14 @@ const AdminInventory = () => {
     setSaving(true);
     setError('');
     try {
-      const base64Data = newItem.fabricImageUrl.split(',')[1];
-      const result = await simulateVirtualTryOn(base64Data, style);
+      const { base64Data, mimeType } = parseImageData(newItem.fabricImageUrl);
+      const result = await simulateVirtualTryOn(base64Data, style, mimeType);
       setNewItem((current) => ({
         ...current,
-        renderedImageUrl: current.renderedImageUrl || current.fabricImageUrl,
+        renderedImageUrl: result.generatedImageUrl || current.renderedImageUrl || current.fabricImageUrl,
         description: result.detailedDescription || current.description,
       }));
+      setPreviewDescription(result.detailedDescription || '');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The AI preview could not be generated.');
     } finally {
@@ -105,6 +116,7 @@ const AdminInventory = () => {
       await ItemService.addItem(newItem);
       setNewItem(emptyItem);
       setAiResult(null);
+      setPreviewDescription('');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save the design concept.');
@@ -195,8 +207,8 @@ const AdminInventory = () => {
               <Wand2 size={14} />
               Analyse Fabric
             </button>
-            {newItem.styles.map((style) => (
-              <button key={style} type="button" onClick={() => void runTryOn(style)} disabled={saving} className="border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-3 text-[10px] uppercase tracking-[0.3em] font-bold text-[#a17f1a] disabled:opacity-50">
+            {(newItem.styles.length > 0 ? newItem.styles : previewFallbackStyles).map((style) => (
+              <button key={style} type="button" onClick={() => void runTryOn(style)} disabled={saving || !newItem.fabricImageUrl} className="border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-3 text-[10px] uppercase tracking-[0.3em] font-bold text-[#a17f1a] disabled:opacity-50">
                 Preview {style}
               </button>
             ))}
@@ -205,6 +217,18 @@ const AdminInventory = () => {
               Save Design
             </button>
           </div>
+
+
+          {newItem.renderedImageUrl && (
+            <div className="rounded-2xl border border-black/5 bg-[#fcfaf5] p-5 space-y-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] opacity-45">AI Couture Preview</p>
+                <h3 className="font-serif text-xl mt-2">Boutique look on model</h3>
+              </div>
+              <img src={newItem.renderedImageUrl} alt="AI couture preview" className="w-full max-h-[32rem] object-cover rounded-2xl" />
+              {previewDescription && <p className="text-sm opacity-70">{previewDescription}</p>}
+            </div>
+          )}
 
           {aiResult && (
             <div className="rounded-2xl bg-[#f8f4ea] border border-black/5 p-5 space-y-3">
